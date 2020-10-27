@@ -1,5 +1,6 @@
 language: c
 
+
 matrix:
   include:
 
@@ -82,7 +83,92 @@ matrix:
       before_script: bazel info
       script: |
         bazel test @jansson//... //tests/...
+# Adding code to run on powersystems
+    # Build for 64-bit Linux without profiling enabled
+    - os: linux
+      dist: xenial
+      arch: ppc64le
+      sudo: required
+      env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
+      # The certificate for scan.coverity.com is too new and is not recognized by
+      # wget. This command adds the certificate to /etc/ssl/certs/ca-certificates.crt
+      # See: https://github.com/travis-ci/travis-ci/issues/6142
+      before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+      install: |
+        sudo apt-get update
+        sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            libjansson-dev \
+            libmagic-dev \
+            libssl-dev  \
+            protobuf-compiler \
+            protobuf-c-compiler \
+            libprotobuf-c-dev
 
+    # Build for 64-bit Linux with profiling enabled
+    - os: linux
+      dist: xenial
+      arch: ppc64le
+      sudo: required
+      env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-pb-tests -enable-address-sanitizer --enable-profiling"
+      install: |
+        sudo apt-get update
+        sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            libjansson-dev \
+            libmagic-dev \
+            libssl-dev  \
+            protobuf-compiler \
+            protobuf-c-compiler \
+            libprotobuf-c-dev
+
+    # Build for 32-bit Linux
+    - os: linux
+      dist: trusty
+      arch: ppc64le
+      sudo: required
+      env: CONFIGFLAGS="CFLAGS=-m32 --enable-cuckoo --enable-magic"
+      install: |
+        sudo dpkg --add-architecture i386 && sudo rm -rf /etc/apt/sources.list.d/
+        sudo apt-get update
+        sudo apt-get remove postgresql-9.3
+        sudo apt-get upgrade -y gcc
+        sudo apt-get install -y gcc-multilib autoconf automake libtool libjansson-dev:i386 libmagic-dev:i386 libssl-dev:i386
+
+    # Build for 64-bit Window using MinGW cross-compiler
+    - os: linux
+      dist: xenial
+      arch: ppc64le
+      sudo: required
+      env: CONFIGFLAGS=--host=x86_64-w64-mingw32
+      install: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-mingw-w64 autoconf automake libtool
+
+    # Build for 64-bit Window using MinGW cross-compiler
+    - os: linux
+      dist: xenial
+      arch: ppc64le
+      sudo: required
+      env: CONFIGFLAGS=--host=i686-w64-mingw32
+      install: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-mingw-w64 autoconf automake libtool
+
+    # Build for 64-bit Linux using Bazel instead of make.
+    - os: linux
+      dist: xenial
+      arch: ppc64le
+      install: |
+         wget https://github.com/bazelbuild/bazel/releases/download/2.1.0/bazel_2.1.0-linux-x86_64.deb
+         sudo dpkg -i bazel_2.1.0-linux-x86_64.deb
+      before_script: bazel info
+      script: |
+        bazel test @jansson//... //tests/...
     # Build for OS X
     - os: osx
       osx_image: xcode7.3
