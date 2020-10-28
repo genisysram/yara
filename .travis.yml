@@ -164,8 +164,13 @@ matrix:
       dist: xenial
       arch: ppc64le
       install: |
-         wget https://github.com/bazelbuild/bazel/releases/download/2.1.0/bazel_2.1.0-linux-x86_64.deb
-         sudo dpkg -i bazel_2.1.0-linux-x86_64.deb
+           wget https://github.com/bazelbuild/bazel/releases/download/0.4.5/bazel-0.4.5-dist.zip
+           unzip bazel-0.4.5-dist.zip
+           ./compile.sh
+            export PATH=$PATH:$wdir/bazel/output
+
+#wget https://github.com/bazelbuild/bazel/releases/download/2.1.0/bazel_2.1.0-linux-x86_64.deb
+ #        sudo dpkg -i bazel_2.1.0-linux-x86_64.deb
       before_script: bazel info
       script: |
         bazel test @jansson//... //tests/...
